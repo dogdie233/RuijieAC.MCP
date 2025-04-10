@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RuijieAC.MCP", "RuijieAC.MCP\RuijieAC.MCP.csproj", "{08C6C165-8366-4480-92C2-6992D6D5DD58}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{08C6C165-8366-4480-92C2-6992D6D5DD58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08C6C165-8366-4480-92C2-6992D6D5DD58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08C6C165-8366-4480-92C2-6992D6D5DD58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08C6C165-8366-4480-92C2-6992D6D5DD58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{918CD886-38D0-4C23-A1A5-02BEA8FC7FB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{918CD886-38D0-4C23-A1A5-02BEA8FC7FB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{918CD886-38D0-4C23-A1A5-02BEA8FC7FB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{918CD886-38D0-4C23-A1A5-02BEA8FC7FB0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
