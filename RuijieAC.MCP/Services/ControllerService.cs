@@ -18,29 +18,29 @@ public sealed class ControllerService(IOptions<ControllerOptions> controllerOpti
     private const string LoginPath = "/login.do";
     private const string LogoutPath = "/logout.do";
 
-    public async Task<string> GetAsync(string path, bool noAuth = false)
+    public async Task<string> GetAsync(string path, bool noAuth = false, CancellationToken ct = default)
     {
         EnsureNotDisposed();
-        if (!noAuth) await EnsureLoginAsync();
+        if (!noAuth) await EnsureLoginAsync(ct);
         logger.LogInformation("Sending {Method} request to {Host} {Path}", "GET", client.BaseAddress, path);
-        var response = await client.GetAsync(path);
+        var response = await client.GetAsync(path, ct);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync();
+        return await response.Content.ReadAsStringAsync(ct);
     }
 
-    public async Task<string> PostAsync(string path, Dictionary<string, string> form, bool noAuth = false)
+    public async Task<string> PostAsync(string path, Dictionary<string, string> form, bool noAuth = false, CancellationToken ct = default)
     {
         EnsureNotDisposed();
-        if (!noAuth) await EnsureLoginAsync();
+        if (!noAuth) await EnsureLoginAsync(ct);
         var payload = new FormUrlEncodedContent(form);
         var payloadLog = JsonSerializer.Serialize(form, SourceGeneratedJsonContext.Default.DicKeyStringValueString);
         logger.LogInformation("Sending {Method} request to {Host} {Path} with form payload: {payload}", "POST", client.BaseAddress, path, payloadLog);
-        var response = await client.PostAsync(path, payload);
+        var response = await client.PostAsync(path, payload, ct);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync();
+        return await response.Content.ReadAsStringAsync(ct);
     }
 
-    public async ValueTask EnsureLoginAsync()
+    public async ValueTask EnsureLoginAsync(CancellationToken ct)
     {
         EnsureNotDisposed();
         var cookie = cookieContainer.GetCookies(client.BaseAddress!);
@@ -48,7 +48,7 @@ public sealed class ControllerService(IOptions<ControllerOptions> controllerOpti
 
         var username = controllerOptions.Value.Username;
         var hmacRequestPath = HmacPath + $"?user={username}&_={Random.Shared.Next()}";
-        var hmacInfoString = await GetAsync(hmacRequestPath, true);
+        var hmacInfoString = await GetAsync(hmacRequestPath, true, ct);
         var hmacInfo = JsonSerializer.Deserialize(hmacInfoString, SourceGeneratedJsonContext.Default.HmacInfo);
         if (hmacInfo is null) throw new Exception("Login failed, hmacInfo is null");
         
@@ -58,7 +58,7 @@ public sealed class ControllerService(IOptions<ControllerOptions> controllerOpti
             { "user", username },
             { "key", password },
         };
-        var responseString = await PostAsync(LoginPath, payload, true);
+        var responseString = await PostAsync(LoginPath, payload, true, ct);
         var code = CommonUtil.ParseReturnCode(responseString);
         code ??= -1;
         if (code != 0) throw new LoginException(code.Value);
