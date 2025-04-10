@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.RegularExpressions;
 
 using RuijieAC.MCP.Models;
@@ -28,7 +29,7 @@ internal static partial class CommonUtil
         {
             using var pbkdf2 = new Rfc2898DeriveBytes(
                 password,
-                Convert.FromBase64String(hmacInfo.Salt),
+                Encoding.ASCII.GetBytes(hmacInfo.Salt),
                 hmacInfo.Iter,
                 HashAlgorithmName.SHA256);
 

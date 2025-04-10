@@ -13,7 +13,7 @@ namespace RuijieAC.MCP.Services;
 public sealed class ControllerService(IOptions<ControllerOptions> controllerOptions, ILogger<ControllerService> logger,
     HttpClient client, CookieContainer cookieContainer) : IAsyncDisposable
 {
-    private bool _disposed;
+    private bool _disposed, _disposing;
     private const string HmacPath = "/hmac_info.do";
     private const string LoginPath = "/login.do";
     private const string LogoutPath = "/logout.do";
@@ -52,7 +52,7 @@ public sealed class ControllerService(IOptions<ControllerOptions> controllerOpti
         var hmacInfo = JsonSerializer.Deserialize(hmacInfoString, SourceGeneratedJsonContext.Default.HmacInfo);
         if (hmacInfo is null) throw new Exception("Login failed, hmacInfo is null");
         
-        var password = CommonUtil.LoginHmac(hmacInfo, username, controllerOptions.Value.CertFilePath);
+        var password = CommonUtil.LoginHmac(hmacInfo, username, controllerOptions.Value.Password);
         var payload = new Dictionary<string, string>
         {
             { "user", username },
@@ -76,9 +76,10 @@ public sealed class ControllerService(IOptions<ControllerOptions> controllerOpti
 
     public async ValueTask DisposeAsync()
     {
-        if (_disposed) return;
-        _disposed = true;
+        if (_disposed || _disposing) return;
+        _disposing = true;
         await LogoutAsync();
+        _disposed = true;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
