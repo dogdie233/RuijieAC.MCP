@@ -113,7 +113,7 @@ public class McpToolsSourceGenerator : IIncrementalGenerator
         {
             var ns = syntaxContext.TargetSymbol.ContainingNamespace;
             var name = syntaxContext.TargetSymbol.Name;
-            return $"global::{(ns?.IsGlobalNamespace ?? true ? "" : ns.Name + ".")}{name}";
+            return $"global::{(ns?.IsGlobalNamespace ?? true ? "" : ns + ".")}{name}";
         }
     }
 }
