@@ -1,7 +1,8 @@
 ﻿using System.Net;
-using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using RuijieAC.MCP.Options;
@@ -9,7 +10,8 @@ using RuijieAC.MCP.Utils;
 
 namespace RuijieAC.MCP.Services;
 
-public sealed class ControllerService(IOptions<ControllerOptions> controllerOptions, HttpClient client, CookieContainer cookieContainer) : IAsyncDisposable
+public sealed class ControllerService(IOptions<ControllerOptions> controllerOptions, ILogger<ControllerService> logger,
+    HttpClient client, CookieContainer cookieContainer) : IAsyncDisposable
 {
     private bool _disposed;
     private const string HmacPath = "/hmac_info.do";
@@ -20,7 +22,21 @@ public sealed class ControllerService(IOptions<ControllerOptions> controllerOpti
     {
         EnsureNotDisposed();
         if (!noAuth) await EnsureLoginAsync();
+        logger.LogInformation("Sending {Method} request to {Host} {Path}", "GET", client.BaseAddress, path);
         var response = await client.GetAsync(path);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    public async Task<string> PostAsync(string path, Dictionary<string, string> form, bool noAuth = false)
+    {
+        EnsureNotDisposed();
+        if (!noAuth) await EnsureLoginAsync();
+        var payload = new FormUrlEncodedContent(form);
+        var payloadLog = JsonSerializer.Serialize(form, SourceGeneratedJsonContext.Default.DicKeyStringValueString);
+        logger.LogInformation("Sending {Method} request to {Host} {Path} with form payload: {payload}", "POST", client.BaseAddress, path, payloadLog);
+        var response = await client.PostAsync(path, payload);
+        response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync();
     }
 
@@ -32,18 +48,17 @@ public sealed class ControllerService(IOptions<ControllerOptions> controllerOpti
 
         var username = controllerOptions.Value.Username;
         var hmacRequestPath = HmacPath + $"?user={username}&_={Random.Shared.Next()}";
-        var hmacInfo = await client.GetFromJsonAsync(hmacRequestPath, SourceGeneratedJsonContext.Default.HmacInfo);
+        var hmacInfoString = await GetAsync(hmacRequestPath, true);
+        var hmacInfo = JsonSerializer.Deserialize(hmacInfoString, SourceGeneratedJsonContext.Default.HmacInfo);
         if (hmacInfo is null) throw new Exception("Login failed, hmacInfo is null");
         
         var password = CommonUtil.LoginHmac(hmacInfo, username, controllerOptions.Value.CertFilePath);
-        var payload = new FormUrlEncodedContent([
-            new KeyValuePair<string, string>("user", username),
-            new KeyValuePair<string, string>("key", password)
-        ]);
-        var response = await client.PostAsync(LoginPath, payload);
-        response.EnsureSuccessStatusCode();
-        
-        var responseString = await response.Content.ReadAsStringAsync();
+        var payload = new Dictionary<string, string>
+        {
+            { "user", username },
+            { "key", password },
+        };
+        var responseString = await PostAsync(LoginPath, payload, true);
         var code = CommonUtil.ParseReturnCode(responseString);
         code ??= -1;
         if (code != 0) throw new LoginException(code.Value);
@@ -56,8 +71,7 @@ public sealed class ControllerService(IOptions<ControllerOptions> controllerOpti
         if (cookie.All(c => c.Name != "SIDS")) return;  // Already logged out
         
         var requestPath = LogoutPath + $"?_={Random.Shared.Next()}";
-        var response = await client.GetAsync(requestPath);
-        response.EnsureSuccessStatusCode();
+        await GetAsync(requestPath, true);
     }
 
     public async ValueTask DisposeAsync()
