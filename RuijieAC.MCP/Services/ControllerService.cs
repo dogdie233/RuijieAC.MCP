@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 
 using Microsoft.Extensions.Options;
 
@@ -8,14 +9,16 @@ using RuijieAC.MCP.Utils;
 
 namespace RuijieAC.MCP.Services;
 
-public class ControllerService(IOptions<ControllerOptions> controllerOptions, HttpClient client, CookieContainer cookieContainer)
+public sealed class ControllerService(IOptions<ControllerOptions> controllerOptions, HttpClient client, CookieContainer cookieContainer) : IAsyncDisposable
 {
+    private bool _disposed;
     private const string HmacPath = "/hmac_info.do";
     private const string LoginPath = "/login.do";
     private const string LogoutPath = "/logout.do";
 
     public async Task<string> GetAsync(string path, bool noAuth = false)
     {
+        EnsureNotDisposed();
         if (!noAuth) await EnsureLoginAsync();
         var response = await client.GetAsync(path);
         return await response.Content.ReadAsStringAsync();
@@ -23,6 +26,7 @@ public class ControllerService(IOptions<ControllerOptions> controllerOptions, Ht
 
     public async ValueTask EnsureLoginAsync()
     {
+        EnsureNotDisposed();
         var cookie = cookieContainer.GetCookies(client.BaseAddress!);
         if (cookie.Any(c => c.Name == "SIDS")) return;  // Already logged in
 
@@ -47,11 +51,25 @@ public class ControllerService(IOptions<ControllerOptions> controllerOptions, Ht
 
     public async ValueTask LogoutAsync()
     {
+        EnsureNotDisposed();
         var cookie = cookieContainer.GetCookies(client.BaseAddress!);
         if (cookie.All(c => c.Name != "SIDS")) return;  // Already logged out
         
         var requestPath = LogoutPath + $"?_={Random.Shared.Next()}";
         var response = await client.GetAsync(requestPath);
         response.EnsureSuccessStatusCode();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        await LogoutAsync();
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void EnsureNotDisposed()
+    {
+        if (_disposed) throw new ObjectDisposedException(nameof(ControllerService));
     }
 }
