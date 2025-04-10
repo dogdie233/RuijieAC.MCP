@@ -1,8 +1,14 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+
 using ModelContextProtocol.Server;
-using System.ComponentModel;
+
+using RuijieAC.MCP.Options;
+using RuijieAC.MCP.Options.Validators;
+using RuijieAC.MCP.Services;
+using RuijieAC.MCP.Utils;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Logging.AddConsole(consoleLogOptions =>
@@ -10,16 +16,21 @@ builder.Logging.AddConsole(consoleLogOptions =>
     // Configure all logs to go to stderr
     consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Trace;
 });
+
+// Add configuration
+builder.Configuration.AddEnvironmentVariables();
+
+// Add options
+builder.Services.AddOptionsWithValidateOnStart<ControllerOptions, ControllerOptionsValidator>()
+    .Bind(builder.Configuration.GetSection("Controller"));
+
+// Add Mcp server service
 builder.Services
     .AddMcpServer()
     .WithStdioServerTransport()
-    .WithToolsFromAssemblySourceGen()
-    .WithPromptsFromAssemblySourceGen();
-await builder.Build().RunAsync();
+    .WithToolsFromAssemblySourceGen();
 
-[McpServerToolType]
-public static class EchoTool
-{
-    [McpServerTool, Description("Echoes the message back to the client.")]
-    public static string Echo(string message) => $"hello {message}";
-}
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<ControllerService>();
+
+await builder.Build().RunAsync();
