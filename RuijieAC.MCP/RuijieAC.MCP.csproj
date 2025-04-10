@@ -13,4 +13,10 @@
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-preview.2.25163.2" />
       <PackageReference Include="ModelContextProtocol" Version="0.1.0-preview.6" />
     </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\RuijieAC.MCP.SourceGenerator\RuijieAC.MCP.SourceGenerator.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false" />
+    </ItemGroup>
 </Project>

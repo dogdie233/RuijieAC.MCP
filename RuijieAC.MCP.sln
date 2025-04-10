@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RuijieAC.MCP", "RuijieAC.MCP\RuijieAC.MCP.csproj", "{08C6C165-8366-4480-92C2-6992D6D5DD58}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RuijieAC.MCP.SourceGenerator", "RuijieAC.MCP.SourceGenerator\RuijieAC.MCP.SourceGenerator.csproj", "{918CD886-38D0-4C23-A1A5-02BEA8FC7FB0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

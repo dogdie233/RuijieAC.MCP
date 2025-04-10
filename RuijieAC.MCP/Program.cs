@@ -13,7 +13,7 @@ builder.Logging.AddConsole(consoleLogOptions =>
 builder.Services
     .AddMcpServer()
     .WithStdioServerTransport()
-    .WithToolsFromAssembly();
+    .WithToolsFromAssemblySourceGen();
 await builder.Build().RunAsync();
 
 [McpServerToolType]
