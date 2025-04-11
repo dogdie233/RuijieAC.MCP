@@ -13,6 +13,11 @@ public class ControllerOptionsValidator : IValidateOptions<ControllerOptions>
             return ValidateOptionsResult.Fail($"{nameof(ControllerOptions.Url)} is required.");
         }
 
+        if (options.Url.EndsWith('/'))
+        {
+            options.Url = options.Url.TrimEnd('/');
+        }
+
         if (string.IsNullOrWhiteSpace(options.Username))
         {
             return ValidateOptionsResult.Fail($"{nameof(ControllerOptions.Username)} is required.");
