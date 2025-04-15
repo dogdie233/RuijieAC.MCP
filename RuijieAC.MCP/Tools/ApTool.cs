@@ -37,6 +37,7 @@ public static class ApTool
         if (location is not null) form.Add("query[location]", location);
         if (state is not null) form.Add("query[state]", state);
         var controller = sp.GetRequiredService<ControllerService>();
-        return await controller.PostAsync("/web/init.cgi/ac.dashboard.ap_list/getApList", form, ct: ct);;
+        var result = await controller.PostAsync("/web/init.cgi/ac.dashboard.ap_list/getApList", form, ct: ct);
+        return result;
     }
 }

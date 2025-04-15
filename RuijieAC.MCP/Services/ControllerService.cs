@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -11,7 +12,7 @@ using RuijieAC.MCP.Utils;
 namespace RuijieAC.MCP.Services;
 
 public sealed class ControllerService(IOptions<ControllerOptions> controllerOptions, ILogger<ControllerService> logger,
-    HttpClient client, CookieContainer cookieContainer) : IAsyncDisposable
+    [FromKeyedServices("RuijieHttpClient")] HttpClient client, CookieContainer cookieContainer) : IAsyncDisposable
 {
     private bool _disposed, _disposing;
     private const string HmacPath = "/hmac_info.do";
@@ -25,7 +26,8 @@ public sealed class ControllerService(IOptions<ControllerOptions> controllerOpti
         logger.LogInformation("Sending {Method} request to {Host} {Path}", "GET", client.BaseAddress, path);
         var response = await client.GetAsync(path, ct);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync(ct);
+        var result = await response.Content.ReadAsStringAsync(ct);
+        return result;
     }
 
     public async Task<string> PostAsync(string path, Dictionary<string, string> form, bool noAuth = false, CancellationToken ct = default)
@@ -37,7 +39,8 @@ public sealed class ControllerService(IOptions<ControllerOptions> controllerOpti
         logger.LogInformation("Sending {Method} request to {Host} {Path} with form payload: {payload}", "POST", client.BaseAddress, path, payloadLog);
         var response = await client.PostAsync(path, payload, ct);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync(ct);
+        var result = await response.Content.ReadAsStringAsync(ct);
+        return result;
     }
 
     public async ValueTask EnsureLoginAsync(CancellationToken ct)

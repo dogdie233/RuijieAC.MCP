@@ -26,7 +26,10 @@ builder.Services.AddOptionsWithValidateOnStart<ControllerOptions, ControllerOpti
 
 // Add Mcp server service
 builder.Services
-    .AddMcpServer()
+    .AddMcpServer(options =>
+    {
+        options.InitializationTimeout = TimeSpan.FromSeconds(114514);
+    })
     .WithStdioServerTransport()
     .WithToolsFromAssemblySourceGen();
 
