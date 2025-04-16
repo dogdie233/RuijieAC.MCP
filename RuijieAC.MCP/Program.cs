@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 
 using ModelContextProtocol.Server;
 
+using RuijieAC.MCP;
 using RuijieAC.MCP.Options;
 using RuijieAC.MCP.Options.Validators;
 using RuijieAC.MCP.Services;
@@ -31,7 +32,7 @@ builder.Services
         options.InitializationTimeout = TimeSpan.FromSeconds(114514);
     })
     .WithStdioServerTransport()
-    .WithToolsFromAssemblySourceGen();
+    .WithToolsFromAssemblySourceGen(GeneratedJsonContext.Default.Options);
 
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ControllerService>();
