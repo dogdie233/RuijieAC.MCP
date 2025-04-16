@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
-using System.Runtime.InteropServices;
 
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 
 using ModelContextProtocol.Server;
@@ -13,14 +13,10 @@ namespace RuijieAC.MCP.Tools;
 public static class ApTool
 {
     [McpServerTool(Name = "query_access_point")]
-    [Description("Query and return No.[start, end] wireless access points that meet all query parameters, end have to greater or equals start. If a query parameter is null, it will be ignored.")]
+    [Description("Query and return No.[start, end] wireless access points that meet all query parameters, end have to greater or equals start.")]
     public static async Task<string> QueryAccessPoints(
         IServiceProvider sp,
-        [Description("The ap's name, support fuzzy search")] string? name,
-        [Description("The ap's mac address, support fuzzy search")] string? mac,
-        [Description("The ap's ip address, support fuzzy search")] string? ip,
-        [Description("The ap's location, support fuzzy search")] string? location,
-        [Description("The ap's state, permitted value: [\"Run\", \"Quit\"]")] string? state,
+        [Description("An array of key-value pairs representing query conditions (AND logic).\nKeys: \"name\", \"mac\", \"ip\", \"location\", or \"state\".\nValues: Any string, except for key \"state\" where the value must be \"Quit\" or \"Run\".")] KeyValuePair<string, string>[] query,
         [Description("The starting index of the query range (1-based)")] int start = 1,
         [Description("The ending index of the query range (inclusive), suggest to use 20")] int end = 20,
         CancellationToken ct = default)
@@ -31,11 +27,12 @@ public static class ApTool
             { "End", end.ToString() },
             { "withRadioInfo", "false" },
         };
-        if (name is not null) form.Add("query[name]", name);
-        if (mac is not null) form.Add("query[mac]", mac);
-        if (ip is not null) form.Add("query[ip]", ip);
-        if (location is not null) form.Add("query[location]", location);
-        if (state is not null) form.Add("query[state]", state);
+        foreach (var kv in query)
+        {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (kv.Value is null) continue;
+            form.Add($"query[{kv.Key}]", kv.Value);
+        }
         var controller = sp.GetRequiredService<ControllerService>();
         var result = await controller.PostAsync("/web/init.cgi/ac.dashboard.ap_list/getApList", form, ct: ct);
         return result;
